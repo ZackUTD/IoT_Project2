@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class Generator {
     private String db = "bearing";
     private static int BW = 100; // buffer window
-    private static int MW = BW * 5; // merge window
+    private static int MW = 3600; // merge window
     private static int mw_count = 0; // merge window counter
     private static int FILE_SIZE = 20;
     private static int INTERVAL = 1;
@@ -255,7 +255,7 @@ public class Generator {
         }
     }
 
-    private static String usage = "Usage: datagen [-offline | -online | -all] [-influxdb] [-host <insert host>]";
+    private static String usage = "Usage: datagen [-offline | -online | -all] [-influxdb] [-host <insert host>] [-bw <insert num>] [-mw <insert num>]";
 
     public static void main(String[] args) {
         Generator generator = new Generator();
@@ -272,16 +272,12 @@ public class Generator {
             boolean online = false;
             boolean influxdb = false;
             boolean hostGiven = false; // whether the host was given
-            boolean hostFlag = false; // whether the -host flag was just read. Used to get the host on the next iteration
-            for (String arg: args) {
-                System.out.println(arg);
+            boolean bwFlag = false;
+            boolean mwFlag = false;
 
-                if(hostFlag) {
-                   generator.host = arg;
-                   hostFlag = false;
-                   hostGiven = true;
-                   continue;
-                }
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                System.out.println(arg);
 
                 switch (arg) {
                     case "-offline":
@@ -293,14 +289,14 @@ public class Generator {
                         break;
                     case "-online":
                         if(online || offline) {
-                            System.out.println("Usage: datagen [-offline | -online | -all] [-influxdb]");
+                            System.out.println(usage);
                             return;
                         }
                         online = true;
                         break;
                     case "-all":
                         if(online || offline) {
-                            System.out.println("Usage: datagen [-offline | -online | -all] [-influxdb]");
+                            System.out.println(usage);
                             return;
                         }
                         offline = true;
@@ -308,20 +304,52 @@ public class Generator {
                         break;
                     case "-influxdb":
                         if(influxdb) {
-                            System.out.println("Usage: datagen [-offline | -online | -all] [-influxdb]");
+                            System.out.println(usage);
                             return;
                         }
                         influxdb = true;
                         break;
                     case "-host":
-                        if(hostGiven || hostFlag) {
-                            System.out.println("Usage: datagen [-offline | -online | -all] [-influxdb]");
+                        if(hostGiven) {
+                            System.out.println(usage);
                             return;
                         }
-                        hostFlag = true;
+                        hostGiven = true;
+                        i += 1;
+                        generator.host = args[i];
+                        break;
+                    case "-bw":
+                        if(bwFlag) {
+                            System.out.println(usage);
+                            return;
+                        }
+                        i += 1;
+                        try {
+                            Generator.BW = Integer.parseInt(args[i]);
+                        }
+                        catch (Exception e) {
+                            System.out.println(usage);
+                            return;
+                        }
+                        bwFlag = true;
+                        break;
+                    case "-mw":
+                        if(mwFlag) {
+                            System.out.println(usage);
+                            return;
+                        }
+                        i += 1;
+                        try {
+                            Generator.MW = Integer.parseInt(args[i]);
+                        }
+                        catch (Exception e) {
+                            System.out.println(usage);
+                            return;
+                        }
+                        mwFlag = true;
                         break;
                     default:
-                        System.out.println("Usage: datagen [-offline | -online | -all] [-influxdb]");
+                        System.out.println(usage);
                         return;
                 }
             }
