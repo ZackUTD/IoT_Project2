@@ -1,0 +1,23 @@
+Hopefully I can answer some of your questions...
+
+Saving/Loading The Model
+- I will have saved a trained model for you, and it will be saved in a .tar file (you got that figured out in your code)
+- You then load that data into an instance of the FaultDetectNet model, and begin doing your testing and retraining.
+- You won't ever need to save the model again because we don't need that model to appear in any other code after this point
+  (once you're done with it, it isn't needed anymore)
+ 
+Importing FaultDetectNet
+ - I noticed this line in your code near the top: 'from offline1 import FaultDetectNet'
+    I should have mentioned this earlier but the python file containing the neural net is called FaultDetectNet.py and the neural net
+    class itself is called FaultDetectNet, so to import that class and use it, you would do 'from FaultDetectNet import FaultDetectNet'.
+    If you renamed my file to offline1 then what you're doing will work fine. Be aware it'll be called FaultDetectNet when everything is
+    on the TAs machine though. 
+    
+
+Training the classifier
+- Once you have grabbed a chunk of data, you will preprocess it (I'll post a code snippet for how to do that), and then you simply
+  call the neural net on it: Y_pred = model(X)
+  
+
+Timing
+ - We'll be discussing the timing of the testing/retraining process tonight
