@@ -20,12 +20,12 @@ class FaultDetectNet(nn.Module):
         super().__init__()
         self.f1 = nn.Linear(32, 16)  # linear input layer with 3 inputs to each of three neurons
         self.f2 = nn.Linear(16, 8)  # 1st hidden linear layer with 3 inputs to each of three neurons
-        self.ft1 = nn.Linear(8, 8)
-        self.ft2 = nn.Linear(8, 8)
-        self.ft3 = nn.Linear(8, 8)
-        self.ft4 = nn.Linear(8, 8)
-        self.f3 = nn.Linear(8, 4)  # 2nd "..."
-        self.f4 = nn.Linear(4, 3)  # output layer with linear function taking 3 inputs and 3 output
+        self.f3 = nn.Linear(8, 8)
+        self.f4 = nn.Linear(8, 8)
+        self.f5 = nn.Linear(8, 8)
+        self.f6 = nn.Linear(8, 8)
+        self.f7 = nn.Linear(8, 4)  # 2nd "..."
+        self.f8 = nn.Linear(4, 3)  # output layer with linear function taking 3 inputs and 3 output
         self.softmax = nn.Softmax(dim=1) # Softmax activation function used at output layer
         self.sigm = nn.Sigmoid()  # Sigmoid activation function used at input layer and each hidden layer
         
@@ -47,12 +47,12 @@ class FaultDetectNet(nn.Module):
     def forward(self, x, eval=False):
         x = self.sigm(self.f1(x))  # apply linear transformation to inputs (WX + b), and feed result to relu activation function
         x = self.sigm(self.f2(x))  # "..."
-        x = self.sigm(self.ft1(x))
-        x = self.sigm(self.ft2(x))
-        x = self.sigm(self.ft3(x))
-        x = self.sigm(self.ft4(x))
-        x = self.sigm(self.f3(x))  # "..."
-        x = self.softmax(self.f4(x))  # apply linear transformation inputs, and feed result to softmax activation function to obtain probability distribution
+        x = self.sigm(self.f3(x))
+        x = self.sigm(self.f4(x))
+        x = self.sigm(self.f5(x))
+        x = self.sigm(self.f6(x))
+        x = self.sigm(self.f7(x))  # "..."
+        x = self.softmax(self.f8(x))  # apply linear transformation inputs, and feed result to softmax activation function to obtain probability distribution
 
         if eval:
             return self.from_dist(x)
@@ -64,11 +64,15 @@ class FaultDetectNet(nn.Module):
     # convert list of probability distributions to list of labels
     def from_dist(self, dist):
         labels = []
+        conf = []
 
         for row in dist:
-            labels.append(row.argmax().item())
+            max_idx = row.argmax().item()
+            labels.append(max_idx)
+            conf.append(row[max_idx].item())
 
-        return labels
+
+        return labels, conf
 
 
 

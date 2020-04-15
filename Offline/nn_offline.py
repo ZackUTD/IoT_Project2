@@ -25,13 +25,12 @@ client.switch_database('team_3_test_offline')
 MW = 0
 SAMPLE_SIZE = 3000  # one input contains 3000 points -- this will be pre-processed with downcoef
 BATCH_SIZE = 5  # 5 sets at a time
-TRAIN_CUT = 60
-TEST_CUT = 70
+TRAIN_CUT = 70
+TEST_CUT = 82
 
 
 # Perform partial discrete wavelet transform on gs data to obtain approximate coefficients (condense sample size from 3000 to 30)
 def preprocess(x_raw):
-	
 	gs = x_raw['gs'].to_numpy().astype(float).flatten()
 	gs = downcoef('a', gs, 'db4', level=7)
 	sr = float(x_raw['sr'][0])
@@ -98,7 +97,8 @@ def main():
 		X_tst, Y_tst = get_batch(TEST_CUT)
 		Y_true = cons(Y_true, np.array(Y_tst).astype(int))
 		offline_nn.eval()
-		Y_pred = cons(Y_pred, offline_nn(X_tst, eval=True))
+		yp, co = offline_nn(X_tst, eval=True)
+		Y_pred = cons(Y_pred, yp)
 
 	
 
