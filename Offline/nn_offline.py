@@ -15,21 +15,34 @@ import torch
 from influxdb import DataFrameClient as df_client
 from FaultDetectNet import FaultDetectNet
 from sklearn.metrics import accuracy_score
+from pywt import downcoef
 
 
 client = df_client(host='localhost', port=8086)
 client.switch_database('team_3_test_offline')
-#client.switch_database('test')
 
 
 MW = 0
-SAMPLE_SIZE = 50
-BATCH_SIZE = 5
-TRAIN_CUT = 845
-TEST_CUT = 1056
+SAMPLE_SIZE = 3000  # one input contains 3000 points -- this will be pre-processed with downcoef
+BATCH_SIZE = 5  # 5 sets at a time
+TRAIN_CUT = 60
+TEST_CUT = 70
 
 
-# TODO: convert to Craig's logic such that we are getting 24 values to send to neural net
+# Perform partial discrete wavelet transform on gs data to obtain approximate coefficients (condense sample size from 3000 to 30)
+def preprocess(x_raw):
+	
+	gs = x_raw['gs'].to_numpy().astype(float).flatten()
+	gs = downcoef('a', gs, 'db4', level=7)
+	sr = float(x_raw['sr'][0])
+	load = float(x_raw['load'][0])
+
+	return np.append(gs, [sr, load])
+
+
+
+
+# Retrieve a batch of data and preprocess it
 def get_batch(cut):
 	global MW
 	X_batch = []
@@ -38,33 +51,24 @@ def get_batch(cut):
 	batch_end = MW + BATCH_SIZE
 
 	while MW < batch_end and MW < cut:
-		query = 'select gs, sr, load from bearing where mw = ' + str(MW)
+		query = 'select gs, sr, load, label from bearing where mw = ' + str(MW)
 
 		results = client.query(query)
 
 		if results:
-			results_df = results['bearing']
-
-			x_sample = results_df['gs'].to_numpy().astype(float).flatten()
-
-			sr = float(results_df['sr'][0])
-			load = float(results_df['load'][0])
-
-			x_sample = np.append(x_sample, [sr, load])
+			
+			x_sample = preprocess(results['bearing'])
 			X_batch.append(x_sample)
 
-			query = 'select label from bearing where mw = ' + str(MW)
-			results = client.query(query)
-			results_df = results['bearing']
-			Y_batch.append(float(results_df.to_numpy()[0]))
+			label = results['bearing']['label'][0]
+			Y_batch.append(label)
 
 			MW += 1
 				
-
-
 	X_batch = torch.tensor(X_batch).float()
 	Y_batch = torch.tensor(Y_batch).long()
 	return X_batch, Y_batch
+
 
 
 # attach the contents of list Y to list X
@@ -81,9 +85,10 @@ def main():
 	global MW
 	offline_nn = FaultDetectNet()
 
-	while MW < TRAIN_CUT:
+	while MW < TRAIN_CUT:	
 		X_trn, Y_trn = get_batch(TRAIN_CUT)
 		offline_nn.fit(X_trn, Y_trn)
+
 
 
 	Y_pred = []
@@ -93,7 +98,7 @@ def main():
 		X_tst, Y_tst = get_batch(TEST_CUT)
 		Y_true = cons(Y_true, np.array(Y_tst).astype(int))
 		offline_nn.eval()
-		Y_pred = cons(Y_pred, offline_nn(X_tst, test=True))
+		Y_pred = cons(Y_pred, offline_nn(X_tst, eval=True))
 
 	
 
