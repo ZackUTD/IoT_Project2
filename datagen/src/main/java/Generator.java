@@ -27,6 +27,8 @@ public class Generator {
     private static int FILE_SIZE = 20;
     private static int INTERVAL = 1;
 
+    private static float fault_ratio = 0.7f;
+
     private static int LABEL_BASELINE = 0;
     private static int LABEL_OUTER_RACE_FAULT = 1;
     private static int LABEL_INNER_RACE_FAULT = 2;
@@ -109,7 +111,7 @@ public class Generator {
         double prob = random.nextDouble();
         int min, max;
 
-        if (prob < 0.7) {
+        if (prob < fault_ratio) {
             min = 0;
             max = 2;
         }
@@ -196,9 +198,10 @@ public class Generator {
             if(batchPoints.getPoints().size() >= BW) {
                 try {
                     influxDB.write(batchPoints);
-                    System.out.println("Sending batch");
+                    System.out.print("Sending batch");
+                    System.out.println("time " + Long.toString(timestamp-1));
                     batchPoints = BatchPoints.database(batchPoints.getDatabase()).build();
-                    System.out.println(batchPoints.getPoints().size());
+                    //System.out.println(batchPoints.getPoints().size());
                 }
                 catch (Exception e) {
                     System.out.println("ERROR: Failed sending batch");
@@ -255,7 +258,7 @@ public class Generator {
         }
     }
 
-    private static String usage = "Usage: datagen [-offline | -online | -all] [-influxdb] [-host <insert host>] [-bw <insert num>] [-mw <insert num>]";
+    private static String usage = "Usage: datagen [-offline | -online | -all] [-influxdb] [-host <insert host>] [-bw <insert num>] [-mw <insert num>] [-f <insert fault ratio>]";
 
     public static void main(String[] args) {
         Generator generator = new Generator();
@@ -274,6 +277,7 @@ public class Generator {
             boolean hostGiven = false; // whether the host was given
             boolean bwFlag = false;
             boolean mwFlag = false;
+            boolean faultRatioFlag = false;
 
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -347,6 +351,21 @@ public class Generator {
                             return;
                         }
                         mwFlag = true;
+                        break;
+                    case "-f":
+                        if(faultRatioFlag) {
+                            System.out.println(usage);
+                            return;
+                        }
+                        i += 1;
+                        try {
+                            Generator.fault_ratio = Float.parseFloat(args[i]);
+                        }
+                        catch (Exception e) {
+                            System.out.println(usage);
+                            return;
+                        }
+                        faultRatioFlag = true;
                         break;
                     default:
                         System.out.println(usage);
