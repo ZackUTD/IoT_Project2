@@ -78,8 +78,11 @@ public class Generator {
     private String host = "http://localhost:8086";
     private String username = "test"; // We may not need username and password
     private String password = "test1";
-    private String output_db_offline = "team_3_test_offline";
-    private String output_db_online = "team_3_test_online";
+    private String output_db_offline = "team_3_offline";
+    private String output_db_online = "team_3_online";
+    private String output_db_test_offline = "team_3_test_offline";
+    private String output_db_test_online = "team_3_test_online";
+
     private InfluxDB influxDB;
     private BatchPoints batchPoints;
 
@@ -239,9 +242,11 @@ public class Generator {
             int index = selectFile();
             offlineCount += generatePoints(index, "offline");
             mw_count++;
+            /*
             try {
                 Thread.sleep(interArrivalTime + getInterArrivalOffset());
-            } catch (InterruptedException ignored) {}
+            } catch (Exception ignored) {}
+            */
         }
         // TODO: send whatever's left in the buffer to the DB in one last batch?
     }
@@ -252,13 +257,15 @@ public class Generator {
             int index = selectFile();
             generatePoints(index, "online");
             mw_count++;
+            /*
             try {
                 Thread.sleep(interArrivalTime + getInterArrivalOffset());
-            } catch (InterruptedException ignored) {}
+            } catch (Exception ignored) {}
+            */
         }
     }
 
-    private static String usage = "Usage: datagen [-offline | -online | -all] [-influxdb] [-host <insert host>] [-bw <insert num>] [-mw <insert num>] [-f <insert fault ratio>]";
+    private static String usage = "Usage: datagen [-offline | -online | -all] [-influxdb] [-host <insert host>] [-bw <insert num>] [-mw <insert num>] [-f <insert fault ratio>] [-test]";
 
     public static void main(String[] args) {
         Generator generator = new Generator();
@@ -278,6 +285,7 @@ public class Generator {
             boolean bwFlag = false;
             boolean mwFlag = false;
             boolean faultRatioFlag = false;
+            boolean test = false;
 
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -312,6 +320,15 @@ public class Generator {
                             return;
                         }
                         influxdb = true;
+                        break;
+                    case "-test":
+                        if(test) {
+                            System.out.println(usage);
+                            return;
+                        }
+                        generator.output_db_offline = generator.output_db_test_offline;
+                        generator.output_db_online = generator.output_db_test_online;
+                        test = true;
                         break;
                     case "-host":
                         if(hostGiven) {
