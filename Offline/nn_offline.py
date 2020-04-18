@@ -23,9 +23,6 @@ import sys
 client = df_client(host='localhost', port=8086)
 client.switch_database('team_3_offline')
 
-write_client = df_client(host='localhost', port=8086)
-write_client.switch_database('team_3_test_detect')
-
 
 DEBUG = False
 MW_MAX = 0
