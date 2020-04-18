@@ -177,7 +177,7 @@ public class Generator {
                 load = String.valueOf(((MLDouble) readers[index].getField(ATTR_LOAD)).getArray()[0][0]);
             }
 
-            Point point = Point.measurement("bearing").time(timestamp++, TimeUnit.NANOSECONDS)
+            Point point = Point.measurement("bearing").time(System.currentTimeMillis(), TimeUnit.NANOSECONDS)
                     .addField("label", getLabel(index))
                     .addField(ATTR_SR, ((MLDouble)readers[index].getField(ATTR_SR)).getArray()[0][0])
                     .addField("rate", ((MLDouble)readers[index].getField(ATTR_RATE)).getArray()[0][0])
