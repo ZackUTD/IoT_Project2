@@ -1,3 +1,12 @@
+import torch
+from influxdb import DataFrameClient as df_client
+from influxdb import SeriesHelper
+from torch import nn
+from torch import optim
+from FaultDetectNet import FaultDetectNet
+import numpy as np
+import time
+import pandas as pd
 import os
 import datetime
 from sklearn.metrics import accuracy_score
@@ -41,11 +50,10 @@ def getData(pc, W, client):
 
 def preprocess(x_raw):
     gs = x_raw['gs'].to_numpy().astype(float).flatten()
-    gs = downcoef('a', gs, 'db4', level=7)
-    sr = float(x_raw['sr'][0])
-    load = float(x_raw['load'][0])
+    gs = downcoef('a', gs, 'db4', level=7)  
+    load = float(x_raw['load'][0])/300  # normalize the load value
 
-    return np.append(gs, [sr, load])
+    return np.append(gs, load)
 
 def cons(X, Y):
     for y in Y:
